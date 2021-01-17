@@ -6,14 +6,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     MediaPlayer mPlayer;
     Button playButton, pauseButton, stopButton;
+    TextView labelTxt;
+    int musicPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,14 +34,24 @@ public class MainActivity extends AppCompatActivity {
 
         loh.setAdapter(adapter);
 
+        SeekBar seekBar = findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(this);
+        seekBar.setMax(138);
 
-        mPlayer= MediaPlayer.create(this, R.raw.music);
+        labelTxt = (TextView) findViewById(R.id.labelTxt);
+        labelTxt.setText("Playing word...");
+
+
+
+
+        mPlayer = MediaPlayer.create(this, R.raw.music);
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 stopPlay();
             }
         });
+
         playButton = (Button) findViewById(R.id.playButton);
         pauseButton = (Button) findViewById(R.id.pauseButton);
         stopButton = (Button) findViewById(R.id.stopButton);
@@ -45,9 +60,26 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setEnabled(false);
 
 
+        Handler mHandler = new Handler();
+        mHandler.post(() -> {
+            while(mPlayer.isPlaying()) {
+//                // Если нужно где то остановить
+//                if(mPlayer.getCurrentPosition() >  10 ){
+//                    labelTxt.setText("Stop: " + mPlayer.getCurrentPosition() );
+//                    mPlayer.stop();
+//                    break;
+//                }
+
+                // ---------------------------------
+                labelTxt.setText("1");
+                // ---------------------------------
+
+            }
+        });
+
     }
 
-    private void stopPlay(){
+    private void stopPlay() {
         mPlayer.stop();
         pauseButton.setEnabled(false);
         stopButton.setEnabled(false);
@@ -60,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, t.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
     public void play(View view){
 
         mPlayer.start();
@@ -67,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         pauseButton.setEnabled(true);
         stopButton.setEnabled(true);
     }
+
     public void pause(View view){
 
         mPlayer.pause();
@@ -74,9 +108,11 @@ public class MainActivity extends AppCompatActivity {
         pauseButton.setEnabled(false);
         stopButton.setEnabled(true);
     }
+
     public void stop(View view){
         stopPlay();
     }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -84,5 +120,23 @@ public class MainActivity extends AppCompatActivity {
             stopPlay();
         }
     }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        String seekTo = seekBar.getProgress() + "000";
+        mPlayer.seekTo(Integer.parseInt(seekTo));
+        labelTxt.setText(String.valueOf(mPlayer.getCurrentPosition()));
+    }
+
 
 }
