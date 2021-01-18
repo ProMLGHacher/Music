@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -16,9 +18,13 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     MediaPlayer mPlayer;
-    Button playButton, pauseButton, stopButton;
+    Button playButton;
     TextView labelTxt;
     int musicPosition;
+    SeekBar seekBar;
+    Thread myThread;
+    int playButtonPos = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         loh.setAdapter(adapter);
 
-        SeekBar seekBar = findViewById(R.id.seekBar);
+        seekBar = findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
         seekBar.setMax(138);
 
@@ -53,63 +59,53 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         });
 
         playButton = (Button) findViewById(R.id.playButton);
-        pauseButton = (Button) findViewById(R.id.pauseButton);
-        stopButton = (Button) findViewById(R.id.stopButton);
-
-        pauseButton.setEnabled(false);
-        stopButton.setEnabled(false);
 
 
-        Handler mHandler = new Handler();
-        mHandler.post(() -> {
-            while(mPlayer.isPlaying()) {
-//                // Если нужно где то остановить
-//                if(mPlayer.getCurrentPosition() >  10 ){
-//                    labelTxt.setText("Stop: " + mPlayer.getCurrentPosition() );
-//                    mPlayer.stop();
-//                    break;
-//                }
 
-                // ---------------------------------
-                labelTxt.setText("1");
-                // ---------------------------------
 
-            }
-        });
 
     }
 
-    private void stopPlay() {
+    public void playButton(View view) {
+//        //rsfgsfgs
+        if (playButtonPos == 0) {
+            play();
+            playButtonPos = 1;
+        } else if (playButtonPos == 1) {
+            pause();
+            playButtonPos = 0;
+        }
+
+
+
+    }
+
+    public void stopPlay() {
         mPlayer.stop();
-        pauseButton.setEnabled(false);
-        stopButton.setEnabled(false);
+
         try {
             mPlayer.prepare();
             mPlayer.seekTo(0);
-            playButton.setEnabled(true);
         }
         catch (Throwable t) {
             Toast.makeText(this, t.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void play(View view){
-
+    public void play() {
         mPlayer.start();
-        playButton.setEnabled(false);
-        pauseButton.setEnabled(true);
-        stopButton.setEnabled(true);
+        startThread();
+
+//        new Thread(myThread).start();
+
+//        threadStartForSeekBar();
     }
 
-    public void pause(View view){
-
+    public void pause() {
         mPlayer.pause();
-        playButton.setEnabled(true);
-        pauseButton.setEnabled(false);
-        stopButton.setEnabled(true);
     }
 
-    public void stop(View view){
+    public void stop() {
         stopPlay();
     }
 
@@ -137,6 +133,54 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         mPlayer.seekTo(Integer.parseInt(seekTo));
         labelTxt.setText(String.valueOf(mPlayer.getCurrentPosition()));
     }
+
+    public void seekBarSetProgress() {
+        seekBar.setProgress(musicPosition);
+    }
+
+
+//    public Runnable myThread = new Runnable() {
+//        @Override
+//        public void run() {
+//            while (mPlayer.isPlaying()) {
+//
+//                try {
+//                    Thread.sleep(1000);
+//                    musicPosition = mPlayer.getCurrentPosition() / 1000;
+//                    seekBarSetProgress();
+//                } catch (InterruptedException e) {
+//
+//                }
+//
+//                }
+//
+//
+//
+//            }
+//        };
+
+    public void startThread() {
+        myThread = new Thread() {
+            @Override
+            public void run() {
+                while(mPlayer.isPlaying()) {
+                    try{
+                        Thread.sleep(1000);
+                        musicPosition = mPlayer.getCurrentPosition() / 1000;
+                        seekBarSetProgress();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        };
+
+        myThread.start();
+    }
+
+
+
 
 
 }
