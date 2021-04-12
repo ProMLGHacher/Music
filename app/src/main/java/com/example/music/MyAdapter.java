@@ -12,8 +12,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
 
+        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View view = layoutInflater.inflate(R.layout.view_holder, parent, false);
 
         return new MyViewHolder(view);
@@ -21,24 +21,19 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-
+        //code
     }
 
     @Override
     public int getItemCount() {
-        return 5;
+        return 3;
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView firstTextView, secondTextView;
 
-
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-
-            return;
-
-
         }
 
     }
