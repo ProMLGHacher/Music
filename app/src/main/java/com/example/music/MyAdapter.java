@@ -8,6 +8,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     @NonNull
     @Override
@@ -21,14 +24,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        //code
+
     }
 
     @Override
     public int getItemCount() {
-        return 3;
+        return Integer.MAX_VALUE;
     }
-
+    
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView firstTextView, secondTextView;
 

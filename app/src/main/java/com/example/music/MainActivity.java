@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageReference;
@@ -33,7 +34,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     TextView labelTxt;
     SeekBar seekBar;
     Thread myThread;
+
     FirebaseStorage storage;
+    FirebaseDatabase firebaseDatabase;
 
     int musicPosition;
     int playButtonPos = 0;
@@ -46,11 +49,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        firebaseDatabase = FirebaseDatabase.getInstance();
         storage = FirebaseStorage.getInstance();
 
         seekBar = findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
-        labelTxt = (TextView) findViewById(R.id.labelTxt);
+        labelTxt = findViewById(R.id.labelTxt);
         labelTxt.setText("Playing word...");
 
         RecyclerView previewRecyclerView = findViewById(R.id.loh);
@@ -79,13 +83,15 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                             fileName = fileName.substring(37);
                             System.out.println(fileName);
                             fileNames.add(fileName);
+
+
+
                         }
 
                         String fileNamesGet = fileNames.get(musicPosForPlaying);
                         System.out.println(fileNamesGet);
                         String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + fileNamesGet + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
                         System.out.println(setDataSourceURL);
-
 
                         try {
                             mPlayer.setDataSource(setDataSourceURL);
