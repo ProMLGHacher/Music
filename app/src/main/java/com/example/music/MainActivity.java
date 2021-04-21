@@ -34,7 +34,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     MediaPlayer mPlayer;
 
     FloatingActionButton playButton;
-    TextView labelTxt;
     SeekBar seekBar;
     Button nextTrack;
     Button previousTrack;
@@ -71,8 +70,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         playButton = findViewById(R.id.playButton);
         seekBar = findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
-        labelTxt = findViewById(R.id.labelTxt);
-        labelTxt.setText("Playing word...");
 
         RecyclerView previewRecyclerView = findViewById(R.id.coverRV);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
@@ -125,7 +122,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                nextTrack();
+                if (!mPlayer.isLooping()) {
+                    nextTrack();
+                }
             }
         });
 
@@ -318,7 +317,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     public void onStopTrackingTouch(SeekBar seekBar) {
         String seekTo = seekBar.getProgress() + "000";
         mPlayer.seekTo(Integer.parseInt(seekTo));
-        labelTxt.setText(String.valueOf(mPlayer.getCurrentPosition()));
     }
 
     public void seekBarSetProgress() {
