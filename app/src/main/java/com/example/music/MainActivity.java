@@ -44,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     Thread myThread;
 
-
     FirebaseStorage storage;
     FirebaseDatabase firebaseDatabase;
 
@@ -268,10 +267,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        
-
-
     }
 
     public void stop() {
