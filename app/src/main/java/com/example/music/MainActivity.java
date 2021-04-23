@@ -19,7 +19,11 @@ import android.widget.TextView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageReference;
@@ -52,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     boolean getReady = false;
     boolean isLike = false;
     boolean isDisLike = false;
+    String lastMusicName;
 
 
     @Override
@@ -97,20 +102,35 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                             fileNames.add(fileName);
                         }
 
-                        String fileNamesGet = fileNames.get(musicPosForPlaying);
-                        System.out.println(fileNamesGet);
-                        String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + fileNamesGet + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
-                        System.out.println(setDataSourceURL);
+//                        String fileNamesGet = fileNames.get(musicPosForPlaying);
 
-                        try {
-                            mPlayer.setDataSource(setDataSourceURL);
-                            mPlayer.prepare();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        DatabaseReference lastFileNameFromFirebase = firebaseDatabase.getReference("lastMusicName");
 
-                        getReady = true;
+                        lastFileNameFromFirebase.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
+                                lastMusicName = dataSnapshot.getValue().toString();
+
+                                System.out.println(lastMusicName);
+
+                                String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + lastMusicName + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
+
+                                try {
+                                    mPlayer.setDataSource(setDataSourceURL);
+                                    mPlayer.prepareAsync();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                getReady = true;
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -222,6 +242,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         System.out.println(musicPosForPlaying);
         String fileNamesGet = fileNames.get(musicPosForPlaying);
         String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + fileNamesGet + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
+
+        firebaseDatabase.getReference("lastMusicName").setValue(fileNamesGet);
+
         try {
             mPlayer.setDataSource(setDataSourceURL);
 
@@ -251,6 +274,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         mPlayer.reset();
         String fileNamesGet = fileNames.get(musicPosForPlaying);
         String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + fileNamesGet + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
+
+        firebaseDatabase.getReference("lastMusicName").setValue(fileNamesGet);
+
         try {
             mPlayer.setDataSource(setDataSourceURL);
 
