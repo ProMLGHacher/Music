@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     int musicPosition;
     int playButtonPos = 0;
-    int musicPosForPlaying = 1;
+    int musicPosForPlaying = 0;
     boolean getReady = false;
     boolean isLike = false;
     boolean isDisLike = false;
@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         StorageReference listRef = storage.getReference().child("mp3");
+
         listRef.listAll()
                 .addOnSuccessListener(new OnSuccessListener<ListResult>() {
                     @Override
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
                                 System.out.println(lastMusicName);
 
-                                String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + lastMusicName + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
+                                String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + lastMusicName + ".mp3?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
 
                                 try {
                                     mPlayer.setDataSource(setDataSourceURL);
