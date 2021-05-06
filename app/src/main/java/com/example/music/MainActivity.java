@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.SnapHelper;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -30,12 +31,15 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
-    ArrayList<String> fileNames = new ArrayList<>();
+    ArrayList<String> previousTracksArrayList = new ArrayList<>();
 
     MediaPlayer mPlayer;
+
+    Random random = new Random();
 
     FloatingActionButton playButton;
     SeekBar seekBar;
@@ -57,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     boolean isLike = false;
     boolean isDisLike = false;
     String lastMusicName;
+
+    MusicInfo musicInfo;
 
 
     @Override
@@ -90,55 +96,57 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         mPlayer = new MediaPlayer();
         mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        StorageReference listRef = storage.getReference().child("mp3");
 
-        listRef.listAll()
-                .addOnSuccessListener(new OnSuccessListener<ListResult>() {
+
+        DatabaseReference lastFileNameFromFirebase = firebaseDatabase.getReference("lastMusicName");
+        lastFileNameFromFirebase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                lastMusicName = dataSnapshot.getValue().toString();
+
+                previousTracksArrayList.add(lastMusicName);
+                musicPosForPlaying = previousTracksArrayList.size()-1;
+
+                System.out.println(previousTracksArrayList);
+                System.out.println(musicPosForPlaying);
+
+                firebaseDatabase.getReference("tracksInfo").child(lastMusicName).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onSuccess(ListResult listResult) {
-                        for (StorageReference item : listResult.getItems()) {
-                            String fileName = item.toString();
-                            fileName = fileName.substring(37);
-                            System.out.println(fileName);
-                            fileNames.add(fileName);
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        musicInfo = dataSnapshot.getValue(MusicInfo.class);
+
+                        String setDataSourceURL = musicInfo.getMusicURL();
+
+                        try {
+                            mPlayer.setDataSource(setDataSourceURL);
+                            mPlayer.prepareAsync();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
 
-//                        String fileNamesGet = fileNames.get(musicPosForPlaying);
-
-                        DatabaseReference lastFileNameFromFirebase = firebaseDatabase.getReference("lastMusicName");
-
-                        lastFileNameFromFirebase.addListenerForSingleValueEvent(new ValueEventListener() {
+                        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                             @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                                lastMusicName = dataSnapshot.getValue().toString();
-
-                                System.out.println(lastMusicName);
-
-                                String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + lastMusicName + ".mp3?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
-
-                                try {
-                                    mPlayer.setDataSource(setDataSourceURL);
-                                    mPlayer.prepareAsync();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
+                            public void onPrepared(MediaPlayer mp) {
                                 getReady = true;
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-
                             }
                         });
                     }
-                })
-                .addOnFailureListener(new OnFailureListener() {
+
                     @Override
-                    public void onFailure(@NonNull Exception e) {
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
                     }
                 });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+
 
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -230,68 +238,173 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         isLike = false;
     }
 
+
+
+
+    int randomTrackCount;
+    int count;
+    boolean getWhile;
     public void nextTrack() {
 
-        if (musicPosForPlaying + 1 != fileNames.size()) {
-            musicPosForPlaying += 1;
+        if (musicPosForPlaying != previousTracksArrayList.size()-1) {
+            if (previousTracksArrayList.size() > 1) {
+
+                musicPosForPlaying += 1;
+
+                stop();
+                mPlayer.reset();
+                String fileNamesGet = previousTracksArrayList.get(musicPosForPlaying);
+                firebaseDatabase.getReference("lastMusicName").setValue(fileNamesGet);
+
+                firebaseDatabase.getReference("tracksInfo").child(fileNamesGet).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                        musicInfo = dataSnapshot.getValue(MusicInfo.class);
+
+                        try {
+                            mPlayer.setDataSource(musicInfo.getMusicURL());
+
+                            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                @Override
+                                public void onPrepared(MediaPlayer mp) {
+                                    play();
+                                }
+                            });
+
+                            mPlayer.prepareAsync();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+
+            }
         } else {
-            musicPosForPlaying = 0;
-        }
-
-        stop();
-        mPlayer.reset();
-        System.out.println(musicPosForPlaying);
-        String fileNamesGet = fileNames.get(musicPosForPlaying);
-        String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + fileNamesGet + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
-
-        firebaseDatabase.getReference("lastMusicName").setValue(fileNamesGet);
-
-        try {
-            mPlayer.setDataSource(setDataSourceURL);
-
-            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            firebaseDatabase.getReference("tracksInfo").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onPrepared(MediaPlayer mp) {
-                    play();
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                    randomTrackCount = 0;
+                    count = 0;
+                    getWhile = true;
+
+                    while (getWhile) {
+
+                        count = 0;
+                        randomTrackCount = random.nextInt((int) dataSnapshot.getChildrenCount());
+                        System.out.println("1 - " + previousTracksArrayList.toString());
+                        System.out.println("1 - " + randomTrackCount);
+
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            if (count != randomTrackCount) {
+                                count +=  1;
+                            } else {
+                                MusicInfo musicInfoInWhile;
+                                musicInfoInWhile = child.getValue(MusicInfo.class);
+                                String musicNameInWhile = musicInfoInWhile.getMusicName() + "_" + musicInfoInWhile.getArtist();
+
+                                if (!previousTracksArrayList.contains(musicNameInWhile)){
+                                    getWhile = false;
+
+                                    if ( ! previousTracksArrayList.contains(musicInfo.getMusicName() + "_" + musicInfo.getArtist())) {
+                                        previousTracksArrayList.add(musicInfo.getMusicName() + "_" + musicInfo.getArtist());
+                                    }
+                                    musicPosForPlaying = previousTracksArrayList.size()-1;
+
+                                    musicInfo = child.getValue(MusicInfo.class);
+
+                                    if ( ! previousTracksArrayList.contains(musicInfo.getMusicName() + "_" + musicInfo.getArtist())) {
+                                        previousTracksArrayList.add(musicInfo.getMusicName() + "_" + musicInfo.getArtist());
+                                    }
+                                    musicPosForPlaying = previousTracksArrayList.size()-1;
+
+                                    stop();
+                                    mPlayer.reset();
+                                    String setDataSourceURL = musicInfo.getMusicURL();
+
+                                    firebaseDatabase.getReference("lastMusicName").setValue(musicInfo.getMusicName() + "_" + musicInfo.getArtist());
+
+                                    try {
+                                        mPlayer.setDataSource(setDataSourceURL);
+
+                                        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                            @Override
+                                            public void onPrepared(MediaPlayer mp) {
+                                                play();
+                                            }
+                                        });
+
+                                        mPlayer.prepareAsync();
+
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
                 }
             });
-
-            mPlayer.prepareAsync();
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     public void previousTrack() {
 
-        if (musicPosForPlaying == 0) {
-            musicPosForPlaying = fileNames.size() - 1;
+        if (musicPosForPlaying <= 0) {
+            //code
+        } else if (previousTracksArrayList.size() <= 1) {
+            //code
         } else {
             musicPosForPlaying -= 1;
-        }
 
-        stop();
-        mPlayer.reset();
-        String fileNamesGet = fileNames.get(musicPosForPlaying);
-        String setDataSourceURL = "https://firebasestorage.googleapis.com/v0/b/firstproj-d32ba.appspot.com/o/mp3%2F" + fileNamesGet + "?alt=media&token=ff61bf38-2c8c-4ffc-bff3-3e39fca0497b";
+            stop();
+            mPlayer.reset();
+            String fileNamesGet = previousTracksArrayList.get(musicPosForPlaying);
+            firebaseDatabase.getReference("lastMusicName").setValue(fileNamesGet);
 
-        firebaseDatabase.getReference("lastMusicName").setValue(fileNamesGet);
-
-        try {
-            mPlayer.setDataSource(setDataSourceURL);
-
-            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            firebaseDatabase.getReference("tracksInfo").child(fileNamesGet).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onPrepared(MediaPlayer mp) {
-                    play();
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                    musicInfo = dataSnapshot.getValue(MusicInfo.class);
+
+                    try {
+                        mPlayer.setDataSource(musicInfo.getMusicURL());
+
+                        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                            @Override
+                            public void onPrepared(MediaPlayer mp) {
+                                play();
+                            }
+                        });
+
+                        mPlayer.prepareAsync();
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
                 }
             });
-
-            mPlayer.prepareAsync();
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
